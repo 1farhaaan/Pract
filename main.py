@@ -446,9 +446,6 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import load_breast_cancer
 from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report
 
 data = load_breast_cancer()
 X = data.data
@@ -460,31 +457,24 @@ target_names
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
-X_scaled
-
-X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
 pca = PCA(n_components=2)
-X_train_pca = pca.fit_transform(X_train)
-X_test_pca = pca.transform(X_test)
+X_pca = pca.fit_transform(X_scaled)
 
 explained_variance = pca.explained_variance_ratio_
 print("Explained variance ratio of each component:", explained_variance)
 print("Total variance explained by 10 components:", explained_variance.sum())
 
-model = LogisticRegression(max_iter=1000)
-model.fit(X_train_pca, y_train)
-
-y_pred = model.predict(X_test_pca)
-print("✅ Accuracy:", accuracy_score(y_test, y_pred))
-print("\n📊 Classification Report:\n", classification_report(y_test, y_pred))
+df_pca = pd.DataFrame(X_pca, columns=['PC1', 'PC2'])
+df_pca['Target'] = y
 
 plt.figure(figsize=(8,6))
 colors = ['red', 'blue']
 for target in [0,1]:
-    subset = df_pca[df_pca['Target']==target]
-    plt.scatter(subset['PC1'], subset['PC2'], label=target_names[target], alpha=0.7, s=50, c=colors[target])
-    
+    subset = df_pca[df_pca['Target'] == target]
+    plt.scatter(subset['PC1'], subset['PC2'], 
+                label=target_names[target], alpha=0.7, s=50, c=colors[target])
+
 plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.title('PCA of Breast Cancer Dataset')
