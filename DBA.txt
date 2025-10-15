@@ -12,7 +12,315 @@ grant all privileges to scott
 Create Database link TT connect to scott identified by tiger using DB1
 select * from table@TT
 
+
+## PRACTICAL NO.2
+
+# Connected to SQL DB
+C:\Users\admin>sqlplus / as sysdba;
+
+SQL*Plus: Release 11.2.0.1.0 Production on Mon Oct 6 11:08:40 2025
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+Connected.
+
+# starting up
+SQL> STARTUP;
+ORACLE instance started.
+
+
+# shutting the oracle instance
+SQL> SHUTDOWN ABORT;
+ORACLE instance shut down.
+
+# starting up again (part of the process)
+SQL> STARTUP;
+ORACLE instance started.
+
+# Creating user
+SQL> CREATE USER HUSSAIN IDENTIFIED BY HUS;
+
+User created.
+
+# Verifying the presence of user in DB
+SQL> SELECT USERNAME FROM DBA_USERS;
+
+# modify the user by its alias by HUS10
+SQL> ALTER USER HUSSAIN IDENTIFIED BY HUS10;
+
+User altered.
+
+# repeate 
+SQL> SELECT USERNAME FROM DBA_USERS;
+
+# drop user hussain from DB
+SQL> DROP USER HUSSAIN CASCADE;
+
+User dropped.
+
+# verifying the droped user from DB
+SQL> SELECT USERNAME FROM DBA_USERS;
+
+Use Enterprise Manager (EM)
+emctl start dbconsole
+Open a browser and go to:https://localhost:5500/em
+
+
+## PRACTICAL NO.3 (CREATE AND MANAGE DB USER ACCOUNT)
+
+# Connected to SQL DB
+C:\Users\admin>sqlplus / as sysdba;
+
+SQL*Plus: Release 11.2.0.1.0 Production on Mon Oct 6 11:08:40 2025
+
+Copyright (c) 1982, 2010, Oracle.  All rights reserved.
+
+Connected.
+
+# CONNECTING TO SCOTT 
+SQL> CONNECT SYSTEM;
+Enter password:
+Connected.
+
+# GRANTING ALL ACCESS TO USER SCOTT
+SQL> GRANT ALL PRIVILEGES TO scott;
+
+Grant succeeded.
+
+
+# CREATING USER IN DB
+SQL> CREATE USER KAMAL IDENTIFIED BY KK;
+
+User created.
+
+# GIVING PERMISSION BY GRANTING SESSION TO KAMAL
+SQL> GRANT CREATE SESSION, CREATE TABLE TO KAMAL;
+
+Grant succeeded.
+
+SQL> SELECT USER FROM dual;
+
+USER
+------------------------------
+SYS
+
+# NOW CONNECTING TO KAMAL DB
+SQL> CONNECT KAMAL/KK;
+Connected.
+
+# CREATING TABLE IN KAMAL
+SQL> CREATE TABLE EMP1(EID NUMBER(5), ENAME VARCHAR2(20));
+
+# CONNECT TO SCOTT
+SQL> CONNECT scott/tiger;
+Connected.
+
+# CONNECTING TO SYSTEM 
+SQL> CONNECT SYSTEM;
+Enter password:
+Connected.
+
+# GRANTING ALL PERMISSION TO USER SCOTT
+SQL> GRANT ALL PRIVILEGES TO scott;
+
+Grant succeeded.
+
+# CREATING MANAGER ROLE INSIDE SCOTT
+SQL> CREATE ROLE manager_role;
+
+Role created.
+
+# GRANTING PERMISSION MANAGER ROLE FOR CREATING SESSION 
+SQL> GRANT CREATE SESSION, CREATE TABLE TO manager_role;
+
+Grant succeeded.
+
+# GIVING MANAGER ROLE TO KAMAL 
+SQL> GRANT manager_role TO KAMAL;
+
+Grant succeeded.
+
+# TAKING BACK THE MANAGER ROLE FROM KAMAL
+SQL> REVOKE manager_role FROM KAMAL;
+
+Revoke succeeded.
+
+# DROPPING THE MANAGER ROLE 
+SQL> DROP ROLE MANAGER_ROLE;
+
+Role dropped.
+
+
+SQL> ALTER PROFILE DEFAULT LIMIT PASSWORD_LIFE_TIME 90;
+
+Profile altered.
+
+# LOCKING USER (KAMAL)
+SQL> ALTER USER KAMAL ACCOUNT LOCK;
+
+User altered.
+
+# UNLOCKING THE USER (KAMAL)
+SQL> ALTER USER KAMAL ACCOUNT UNLOCK;
+
+User altered.
+
+Pract 4
+
+A)
+
+Sql>connect scott/tiger@orcl;
+
+>create table emp1(empid number primary key,first_name varchar2(10),last_name varchar2(10),hire_date date,salary number(10,2));
+
+>alter table emp1 add(email varchar2(10));
+
+>alter table emp1 modify(salary number(12,2));
+
+>drop table emp1:
+
+B)
+
+>create table emp1(empid number primary key,first_name varchar2(10),last_name varchar2(10),hire_date date,salary number(10,2));
+
+>create table dept1(dept_id number primary key,dept_name varchar2(20) unique,manager_id number,constraint fk_manager foreign key (manager_id) references employees(employee_id));
+
+>create table dept2(dept_id number primary key,dept_name varchar2(20),manager_id number
+
+>alter table dept2 add constraint pk_dept2 primary key(dept_id);
+
+>alter table dept2 add constraint uq_dept2 unique(dept_name);
+
+>desc emp1;
+
+>insert into emp1 values(1,'kk','dj','25-jun-2025',6000);
+
+#add more emp in this 3 to 4
+
+>selct * from emp1 where salary > 5000;
+
+>select first_name,salary from emp1;
+
+
+Practical 5
+A) Monitor and administer undo 
+Identify the Current Undo Tablespace:
+
+SHOW PARAMETER undo_tablespace;
+
+This shows which undo tablespace the instance is using
+
+SQL> SELECT name, value FROM v$parameter WHERE name LIKE 'undo%";
+
+SQL> SELECT
+2 	a.tablespace_name,
+3 	a.bytes / 1024 / 1024 AS size_mb,
+4 	b.bytes / 1024 / 1024 AS used_mb,
+5 	(a.bytes NVL(b.bytes,0)) / 1024 / 1024 AS free_mb
+6 FROM
+7 	dba_data_files a,
+8 	(SELECT SUM(bytes) bytes, file_id
+9 	FROM dba undo extents
+10 	WHERE status = 'ACTIVE'
+11 	GROUP BY file_id) b
+12 WHERE a.file_id=b.file_id(+)
+13 	AND a.tablespace_name IN (SELECT value FROM v$parameter WHERE name = 'undo_tablespace');
+
+SQL> SELECT
+	s.sid, 
+	s.serial#, 
+	t.used urec AS "Undo Records"
+	t.used_ublk AS "Undo Blocks",
+	s.username 
+FROM 
+	v$transaction t,
+	v$session s
+WHERE
+	t.ses_addr s.saddr;
+
+SQL> SELECT file_name FROM dba_data_files WHERE tablespace_name = 'UNDOTBS1';
+FILE_NAME
+C:\APP\SIES\ORADATA\ORCLDB2\UNDOTBS01.DBF
+SQL> ALTER DATABASE DATAFILE 'C:\APP\SIES\ORADATA\ORCLDB2\UNDOTBS01.DBF' RESIZE 200M;
+Database altered.
+
+B)Configure undo retention 
+
+SQL> ALTER SYSTEM SET undo_management = 'AUTO' SCOPE=SPFILE;
+SQL> SHOW PARAMETER undo_management;
+
+SQL> SHOW PARAMETER undo_retention;
+
+SQL> ALTER SYSTEM SET undo_retention = 1800 SCOPE=BOTH;
+System altered.
+
+SQL>SHOW PARAMETER undo_retention;
+
+
+practical 6
+Create Net Service Aliases
+ORCLDB =
+  (DESCRIPTION =
+    (ADDRESS = (PROTOCOL = TCP)(HOST = localhost)(PORT = 1521))
+    (CONNECT_DATA =
+      (SERVER = DEDICATED)
+      (SERVICE_NAME = orcl)
+    )
+  )
+Test Connection Failover
+tnsping ORCLDB
+
+Enable Failover Settings
+
+To enable load balancing and failover:
+ORCL_FAILOVER =
+  (DESCRIPTION =
+    (LOAD_BALANCE = ON)
+    (FAILOVER = ON)
+    (ADDRESS_LIST =
+      (ADDRESS = (PROTOCOL = TCP)(HOST = host1)(PORT = 1521))
+      (ADDRESS = (PROTOCOL = TCP)(HOST = host2)(PORT = 1521))
+    )
+    (CONNECT_DATA =
+      (SERVICE_NAME = orcl)
+    )
+  )
+Test Connection Failover
+
+Stop one listener and connect again:
+lsnrctl stop LISTENER
+sqlplus system/password@ORCL_FAILOVER
+It will automatically connect to the standby listener.
+
+
 practical 7
+command shell
+
+C:\Users\admin>sqlplus / as sysdba
+
+
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+NOARCHIVELOG
+
+SQL> alter database archivelog;
+
+Database altered.
+
+SQL> select log_mode from v$database;
+
+LOG_MODE
+------------
+ARCHIVELOG
+
+SQL> exit;
+
+command shell
+
+C:\Users\admin>mkdir C:\app\oracle\backup
+
 rman target /
 BACKUP DATABASE FORMAT 'C:\app\oracle\backup\full_backup_%U';
 incremental backup
@@ -50,3 +358,52 @@ END
 /
 
 practical 8
+command shell
+C:\Users\admin>sqlplus / as sysdba
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> create tablespace mynewtablespace
+  2  DATAFILE 'C:\app\admin\oradata\oracle1\mynewdatafile.dbf' SIZE 100M
+  3  AUTOEXTEND ON NEXT 10M MAXSIZE 1G;
+
+Tablespace created.
+
+SQL> exit;
+
+
+command shell
+
+C:\Users\admin>cd C:\app\admin\oradata\oracle1
+
+C:\app\admin\oradata\oracle1>rman target /
+
+RMAN> backup database;
+
+RMAN>
+^C
+
+C:\app\admin\oradata\oracle1>sqlplus / as sysdba
+
+
+Connected to:
+Oracle Database 11g Enterprise Edition Release 11.2.0.1.0 - Production
+With the Partitioning, OLAP, Data Mining and Real Application Testing options
+
+SQL> connect scott/tiger as sysdba;
+Connected.
+SQL> SELECT file_name, tablespace_name
+  2  FROM dba_data_files
+  3  WHERE file_name LIKE '%MYNEWDATAFILE.DBF';
+
+SQL> Shutdown immediate;
+
+SQL> exit;
+
+command shell
+
+C:\app\admin\oradata\oracle1>cd C:\app\admin\oradata\oracle1
+
+C:\app\admin\oradata\oracle1>del MYNEWDATAFILE.DBF
